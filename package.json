@@ -1,0 +1,20 @@
+{
+  "name": "hc-fp-fetch",
+  "version": "1.0.0",
+  "description": "Browser oriented fetch lib using fp style and libs",
+  "main": "lib/index.ts",
+  "author": "Henry Mueller",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "fp-ts": "^2.8.4",
+    "io-ts": "^2.2.11"
+  },
+  "devDependencies": {
+    "@types/tap": "^14.10.1",
+    "isomorphic-fetch": "^3.0.0",
+    "node-fetch": "^2.6.1",
+    "tap": "^14.10.8",
+    "typescript": "^4.0.3"
+  }
+}
