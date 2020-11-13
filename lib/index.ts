@@ -38,7 +38,7 @@ const parseFetchResponse = ({
     : left({
         name: "HTTPError",
         status: response.status,
-        message: `${response.status}`,
+        message: `${response.statusText}`, // TODO: check if there is a usable body and return that if there is
       });
 };
 
