@@ -1,6 +1,6 @@
 {
   "name": "fetch-decode",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Browser oriented fetch lib using fp-ts + io-ts to decode and taskify REST API requests",
   "main": "lib/index.ts",
   "repository": {

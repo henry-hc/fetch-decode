@@ -1,7 +1,7 @@
 import tap from "tap";
 import fetch from "node-fetch";
 import * as t from "io-ts";
-import { fetchAndDecode } from "../lib";
+import { fetchAndDecode, FetchError } from "../lib";
 import { isLeft, isRight, mapLeft } from "fp-ts/lib/Either";
 
 globalThis.fetch = fetch;
@@ -52,4 +52,18 @@ tap.test("404 response returns well formed error", async (t) => {
   );
   const result = await fetcher();
   t.true(isLeft(result));
+});
+
+tap.test("404 *JSON* response returns well formed error", async (t) => {
+  const fetcher = fetchAndDecode(Todo)(
+    "https://httpstat.us/404",
+    {
+      headers: {
+        "accept": "application/json",
+      },
+    }
+  );
+  const result = await fetcher();
+  t.true(isLeft(result));
+  mapLeft((error: FetchError) => t.true(("status" in error)))(result)
 });
