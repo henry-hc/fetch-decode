@@ -1,11 +1,11 @@
 {
   "name": "fetch-decode",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Browser oriented fetch lib using fp-ts + io-ts to decode and taskify REST API requests",
   "main": "lib/index.ts",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/henry-hc/fetch-decode"
+    "type": "git",
+    "url": "https://github.com/henry-hc/fetch-decode"
   },
   "author": "Henry Mueller <henry@handcrafted.dev>",
   "license": "MIT",
