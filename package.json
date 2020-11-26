@@ -1,28 +1,32 @@
 {
   "name": "fetch-decode",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Browser oriented fetch lib using fp-ts + io-ts to decode and taskify REST API requests",
   "main": "lib/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/henry-hc/fetch-decode"
   },
+  "homepage": "https://github.com/henry-hc/fetch-decode",
   "author": "Henry Mueller <henry@handcrafted.dev>",
   "license": "MIT",
   "private": false,
   "dependencies": {},
   "scripts": {
     "tap": "tap",
-    "test": "npm run tap"
+    "test": "tap"
   },
   "devDependencies": {
     "@types/tap": "^14.10.1",
+    "docs-ts": "^0.5.3",
     "fp-ts": "^2.8.5",
     "io-ts": "^2.2.12",
     "isomorphic-fetch": "^3.0.0",
     "node-fetch": "^2.6.1",
+    "prettier": "^2.1.2",
     "tap": "^14.10.8",
-    "typescript": "^4.0.3"
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.5"
   },
   "peerDependencies": {
     "fp-ts": "^2.8.5",

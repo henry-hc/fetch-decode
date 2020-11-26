@@ -1,14 +1,12 @@
 import * as t from "io-ts";
 import {
+  TaskEither,
   chain,
   chainEitherK,
-  left,
-  right,
-  TaskEither,
   tryCatch,
 } from "fp-ts/lib/TaskEither";
-import { flow, hole, pipe } from "fp-ts/lib/function";
-import { mapLeft, toError } from "fp-ts/lib/Either";
+import { flow, pipe } from "fp-ts/lib/function";
+import { Either, mapLeft, toError, left, right } from "fp-ts/lib/Either";
 import { failure } from "io-ts/lib/PathReporter";
 
 export interface HTTPError extends Error {
@@ -16,12 +14,10 @@ export interface HTTPError extends Error {
 }
 export type FetchError = Error | HTTPError;
 
-const fetchThunk = (input: RequestInfo, init?: RequestInit) => () =>
-  fetch(input, init);
 const fetchTE = (input: RequestInfo, init?: RequestInit) =>
-  tryCatch(fetchThunk(input, init), toError);
+  tryCatch(() => fetch(input, init), toError);
 
-const consumeJsonStreamThunk = (response: Response) =>
+const consumeJsonStreamThunk = (response: Response) => () =>
   response
     .json()
     // always try to parse JSON, but if it throws,
@@ -29,7 +25,7 @@ const consumeJsonStreamThunk = (response: Response) =>
     .catch((_) => null)
     .then((json) => ({ response, json }));
 const consumeJsonStreamTE = (response: Response) =>
-  tryCatch(() => consumeJsonStreamThunk(response), toError);
+  tryCatch(consumeJsonStreamThunk(response), toError);
 
 const parseFetchResponse = ({
   response,
@@ -37,7 +33,7 @@ const parseFetchResponse = ({
 }: {
   response: Response;
   json: any;
-}): TaskEither<FetchError, any> => {
+}): Either<FetchError, unknown> => {
   return response.ok
     ? right(json)
     : left({
@@ -50,14 +46,38 @@ const parseFetchResponse = ({
 const validationErrorsToError = (errors: t.Errors): Error =>
   new Error(failure(errors).join("/n"));
 
-export const fetchAndDecode = <R>(responseType: t.Type<R>) => (
-  input: RequestInfo,
-  init?: RequestInit
-): TaskEither<FetchError, R> => {
+export const initFetchAndDecode = (baseInit?: RequestInit) => <R>(
+  responseType: t.Type<R>
+) => (input: RequestInfo, init?: RequestInit): TaskEither<FetchError, R> => {
   return pipe(
-    fetchTE(input, init),
+    fetchTE(input, { ...baseInit, ...init }),
     chain(consumeJsonStreamTE),
-    chain(parseFetchResponse),
+    chainEitherK(parseFetchResponse),
     chainEitherK(flow(responseType.decode, mapLeft(validationErrorsToError)))
   );
 };
+
+const jsonContentHeader = {
+  headers: {
+    "Content-type": "application/json; charset=UTF-8",
+  },
+};
+
+export const getAndDecode = initFetchAndDecode();
+// for backwards compat
+export const fetchAndDecode = getAndDecode;
+export const postAndDecode = initFetchAndDecode({
+  method: "POST",
+  ...jsonContentHeader,
+});
+export const putAndDecode = initFetchAndDecode({
+  method: "PUT",
+  ...jsonContentHeader,
+});
+export const patchAndDecode = initFetchAndDecode({
+  method: "PATCH",
+  ...jsonContentHeader,
+});
+export const deleteAndDecode = initFetchAndDecode({
+  method: "DELETE",
+});
