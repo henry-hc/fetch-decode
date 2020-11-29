@@ -2,7 +2,7 @@
   "name": "fetch-decode",
   "version": "0.3.0",
   "description": "Browser oriented fetch lib using fp-ts + io-ts to decode and taskify REST API requests",
-  "main": "lib/index.ts",
+  "main": "src/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/henry-hc/fetch-decode"

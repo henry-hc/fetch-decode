@@ -40,7 +40,10 @@ type Todo = t.TypeOf<typeof Todo>;
 const requestTodo = pipe(
   getAndDecode(Todo)("https://jsonplaceholder.typicode.com/todos/1"),
   TE.map(console.log), // { userId: 1, id: 1, title: 'delectus aut autem', completed: false }
-  TE.mapLeft(({status, message}) => console.error)
+  TE.mapLeft(err => {
+    const message = err instanceof "HTTPError" ? getHttpErrorMessage(err) :  
+    console.error
+  })
 );
 
 // requestTodo is a `TaskEither` which will resolve the underlying promise from fetch to
