@@ -6,6 +6,9 @@ parent: Modules
 
 ## index overview
 
+For usage examples, please see the project
+[readme](https://github.com/henry-hc/fetch-decode)
+
 Added in v0.1.0
 
 ---
@@ -53,6 +56,8 @@ Added in v0.2.0
 
 Defaults `init` to `method: "DELETE"`.
 
+[see also initFetchAndDecode](#initfetchanddecode)
+
 **Signature**
 
 ```ts
@@ -65,7 +70,9 @@ Added in v0.2.0
 
 ## fetchAndDecode
 
-Same as getAndDecod, for backwards compatibility.
+Same as getAndDecode, for backwards compatibility.
+
+[see also initFetchAndDecode](#initfetchanddecode)
 
 **Signature**
 
@@ -81,6 +88,8 @@ Added in v0.1.0
 
 No defaults for `init`, which will default to GET for HTTP. Does not set
 `accepts` or other headers, which some API's may require.
+
+[see also initFetchAndDecode](#initfetchanddecode)
 
 **Signature**
 
@@ -119,7 +128,9 @@ Added in v0.2.0
 
 ## patchAndDecode
 
-Defaults `init` to `method: "PATCH"` and sets `"Content-type": "application/json; charset=UTF-8"` header.
+Defaults `init` to `method: "PATCH"` + `"Content-type": "application/json; charset=UTF-8"` header.
+
+[see also initFetchAndDecode](#initfetchanddecode)
 
 **Signature**
 
@@ -133,7 +144,9 @@ Added in v0.2.0
 
 ## postAndDecode
 
-Defaults `init` to `method: "POST"` and sets `"Content-type": "application/json; charset=UTF-8"` header.
+Defaults `init` to `method: "POST"` + `"Content-type": "application/json; charset=UTF-8"` header.
+
+[see also initFetchAndDecode](#initfetchanddecode)
 
 **Signature**
 
@@ -147,7 +160,9 @@ Added in v0.2.0
 
 ## putAndDecode
 
-Defaults `init` to `method: "PUT"` and sets `"Content-type": "application/json; charset=UTF-8"` header.
+Defaults `init` to `method: "PUT"` + `"Content-type": "application/json; charset=UTF-8"` header.
+
+[see also initFetchAndDecode](#initfetchanddecode)
 
 **Signature**
 

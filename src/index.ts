@@ -1,4 +1,6 @@
 /**
+ * For usage examples, please see the project
+ * [readme](https://github.com/henry-hc/fetch-decode)
  * @since 0.1.0
  */
 import * as t from "io-ts";
@@ -91,18 +93,24 @@ const jsonContentHeader = {
 /**
  * No defaults for `init`, which will default to GET for HTTP. Does not set
  * `accepts` or other headers, which some API's may require.
+ *
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
 export const getAndDecode = initFetchAndDecode();
 /**
- * Same as getAndDecod, for backwards compatibility.
+ * Same as getAndDecode, for backwards compatibility.
+ * 
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.1.0
  */
 export const fetchAndDecode = getAndDecode;
 
 /**
- * Defaults `init` to `method: "POST"` and sets `"Content-type":
+ * Defaults `init` to `method: "POST"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
+ * 
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
 export const postAndDecode = initFetchAndDecode({
@@ -110,8 +118,10 @@ export const postAndDecode = initFetchAndDecode({
   ...jsonContentHeader,
 });
 /**
- * Defaults `init` to `method: "PUT"` and sets `"Content-type":
+ * Defaults `init` to `method: "PUT"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
+ * 
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
 export const putAndDecode = initFetchAndDecode({
@@ -119,8 +129,10 @@ export const putAndDecode = initFetchAndDecode({
   ...jsonContentHeader,
 });
 /**
- * Defaults `init` to `method: "PATCH"` and sets `"Content-type":
+ * Defaults `init` to `method: "PATCH"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
+ * 
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
 export const patchAndDecode = initFetchAndDecode({
@@ -129,6 +141,8 @@ export const patchAndDecode = initFetchAndDecode({
 });
 /**
  * Defaults `init` to `method: "DELETE"`.
+ * 
+ * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
 export const deleteAndDecode = initFetchAndDecode({
