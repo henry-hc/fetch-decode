@@ -2,15 +2,12 @@ import tap from "tap";
 import fetch from "node-fetch";
 import * as iots from "io-ts";
 import {
-  FetchError,
-  HTTPError,
   getAndDecode,
   putAndDecode,
   postAndDecode,
   patchAndDecode,
   deleteAndDecode,
 } from "../src";
-import { isLeft, isRight, mapLeft } from "fp-ts/lib/Either";
 import * as TE from "fp-ts/lib/TaskEither";
 import { flow, pipe } from "fp-ts/lib/function";
 
@@ -24,6 +21,7 @@ import { flow, pipe } from "fp-ts/lib/function";
 globalThis.fetch = fetch;
 
 const todoApiUrl = "https://jsonplaceholder.typicode.com/todos";
+const bogusUrl = "httpsssss://///xxx.yyy.zzz";
 const statUrl = "https://httpstat.us/404";
 
 const Todo = iots.type(
@@ -49,7 +47,7 @@ tap.test("real fetch works", (t) =>
   pipe(
     getAndDecode(Todo)(`${todoApiUrl}/1`),
     TE.map(passIfTodo(t.true)),
-    TE.mapLeft(({ message }) => t.fail(message)),
+    TE.mapLeft(({ message }) => t.fail(message))
   )()
 );
 
@@ -65,19 +63,29 @@ const TodoWithError = iots.type(
 
 type TodoWithError = iots.TypeOf<typeof TodoWithError>;
 
-tap.test("fetch decode returns error", async (t) => {
-  const fetcher = getAndDecode(TodoWithError)(`${todoApiUrl}/1`);
-  const result = await fetcher();
-  t.true(isLeft(result), "returns error");
-});
+tap.test("invalid url returns fetch error", (t) =>
+  pipe(
+    getAndDecode(TodoWithError)(bogusUrl),
+    TE.mapLeft(({ _tag }) => t.is(_tag, "FETCH_ERROR"))
+  )()
+);
 
-tap.test("404 response returns well formed error", async (t) => {
-  const fetcher = getAndDecode(Todo)(statUrl);
-  const result = await fetcher();
-  // t.true(isLeft(result), "returns error");
-  mapLeft((error: FetchError) => t.true("status" in error))(result);
-  mapLeft((error: FetchError) => error instanceof HTTPError : )(result);
-});
+tap.test("fetch decode returns decode error", (t) =>
+  pipe(
+    getAndDecode(TodoWithError)(`${todoApiUrl}/1`),
+    TE.mapLeft(({ _tag }) => t.is(_tag, "DECODE_ERROR"))
+  )()
+);
+
+tap.test("404 response returns well formed error", (t) =>
+  pipe(
+    getAndDecode(Todo)(statUrl),
+    TE.mapLeft((err) => {
+      if (err._tag === "HTTP_ERROR") t.is(err.status, 404);
+      else t.fail("`err` is not HTTPError type");
+    })
+  )()
+);
 
 tap.test("404 *JSON* response returns well formed error", (t) =>
   pipe(
@@ -87,7 +95,10 @@ tap.test("404 *JSON* response returns well formed error", (t) =>
       },
     }),
     TE.map(() => t.fail("404 result not detected")),
-    TE.mapLeft((error: FetchError) => t.true("status" in error))
+    TE.mapLeft((err) => {
+      if (err._tag === "HTTP_ERROR") t.is(err.status, 404);
+      else t.fail("`err` is not HTTPError type");
+    })
   )()
 );
 

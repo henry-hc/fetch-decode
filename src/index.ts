@@ -7,36 +7,58 @@ import * as t from "io-ts";
 import {
   TaskEither,
   chain,
-  chainEitherK,
   tryCatch,
+  rightTask,
+  chainEitherKW,
 } from "fp-ts/lib/TaskEither";
 import { flow, pipe } from "fp-ts/lib/function";
-import { Either, mapLeft, toError, left, right } from "fp-ts/lib/Either";
+import { Either, mapLeft, left, right } from "fp-ts/lib/Either";
 import { failure } from "io-ts/lib/PathReporter";
 
 /**
  * @since 0.2.0
  */
 export interface HTTPError extends Error {
+  readonly _tag: "HTTP_ERROR";
   status: number;
 }
+
 /**
- * @since 0.2.0
+ * @since 0.3.0
  */
-export type FetchError = Error | HTTPError;
+export interface DecodeError extends Error {
+  readonly _tag: "DECODE_ERROR";
+}
+
+/**
+ * @since 0.3.0
+ */
+export interface FetchError extends Error {
+  readonly _tag: "FETCH_ERROR";
+}
+
+const toFetchError = (reason): FetchError => ({
+  _tag: "FETCH_ERROR",
+  message: reason,
+  name: "fetch error",
+});
 
 const fetchTE = (input: RequestInfo, init?: RequestInit) =>
-  tryCatch(() => fetch(input, init), toError);
+  tryCatch(() => fetch(input, init), toFetchError);
 
-const consumeJsonStreamThunk = (response: Response) => () =>
-  response
-    .json()
-    // always try to parse JSON, but if it throws,
-    // swallow and make json prop null
-    .catch((_) => null)
-    .then((json) => ({ response, json }));
-const consumeJsonStreamTE = (response: Response) =>
-  tryCatch(consumeJsonStreamThunk(response), toError);
+const consumeJsonStream = (
+  response: Response
+): TaskEither<FetchError, { response: Response; json: any }> =>
+  pipe(
+    () =>
+      response
+        .json()
+        // always try to parse JSON, but if it throws,
+        // swallow and make json prop null
+        .catch((_) => null)
+        .then((json) => ({ response, json })),
+    rightTask
+  );
 
 const parseFetchResponse = ({
   response,
@@ -44,18 +66,22 @@ const parseFetchResponse = ({
 }: {
   response: Response;
   json: any;
-}): Either<FetchError, unknown> => {
+}): Either<HTTPError, unknown> => {
   return response.ok
     ? right(json)
     : left({
+        _tag: "HTTP_ERROR",
         name: "HTTPError",
         status: response.status,
         message: `${json || response.statusText}`,
       });
 };
 
-const validationErrorsToError = (errors: t.Errors): Error =>
-  new Error(failure(errors).join("/n"));
+const validationErrorsToError = (errors: t.Errors): DecodeError => ({
+  _tag: "DECODE_ERROR",
+  message: failure(errors).join("/n"),
+  name: "decode error",
+});
 
 /**
  * Wraps fetch request in TaskEither.  When request succeeds (`ok === true`),
@@ -75,12 +101,12 @@ const validationErrorsToError = (errors: t.Errors): Error =>
  */
 export const initFetchAndDecode = (baseInit?: RequestInit) => <R>(
   responseType: t.Type<R>
-) => (input: RequestInfo, init?: RequestInit): TaskEither<FetchError, R> => {
+) => (input: RequestInfo, init?: RequestInit) => {
   return pipe(
     fetchTE(input, { ...baseInit, ...init }),
-    chain(consumeJsonStreamTE),
-    chainEitherK(parseFetchResponse),
-    chainEitherK(flow(responseType.decode, mapLeft(validationErrorsToError)))
+    chain(consumeJsonStream),
+    chainEitherKW(parseFetchResponse),
+    chainEitherKW(flow(responseType.decode, mapLeft(validationErrorsToError)))
   );
 };
 
@@ -100,7 +126,7 @@ const jsonContentHeader = {
 export const getAndDecode = initFetchAndDecode();
 /**
  * Same as getAndDecode, for backwards compatibility.
- * 
+ *
  * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.1.0
  */
@@ -109,7 +135,7 @@ export const fetchAndDecode = getAndDecode;
 /**
  * Defaults `init` to `method: "POST"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
- * 
+ *
  * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
@@ -120,7 +146,7 @@ export const postAndDecode = initFetchAndDecode({
 /**
  * Defaults `init` to `method: "PUT"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
- * 
+ *
  * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
@@ -131,7 +157,7 @@ export const putAndDecode = initFetchAndDecode({
 /**
  * Defaults `init` to `method: "PATCH"` + `"Content-type":
  * "application/json; charset=UTF-8"` header.
- * 
+ *
  * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */
@@ -141,7 +167,7 @@ export const patchAndDecode = initFetchAndDecode({
 });
 /**
  * Defaults `init` to `method: "DELETE"`.
- * 
+ *
  * [see also initFetchAndDecode](#initfetchanddecode)
  * @since 0.2.0
  */

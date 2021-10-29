@@ -2,18 +2,26 @@
 
 `fp-ts + io-ts + fetch`
 
-_*preproduction work in progress*_
+Composition of `io-ts` + `TaskEither` from `fp-ts` + fetch:
+- io-ts provides runtime type checking of results from fetch requests in the
+  browser, i.e. "decoding".
+- `TaskEither` provides a useful layer around Promises, for more
+  structured/reliable async code (via the Monad type class).
+- `fetch`, just the Web API for HTTP request in browsers. The api to this
+  function is exposed as is, even though it is not particulary functional in
+  nature.  Headers and URL's and so forth are handled exactly as in unwrapped
+  usage of `fetch`, except for the simple addition of the capability set default
+  `init` values via High Order Function.
 
-Intent is to use io-ts to provide run time type checking for results from fetch
-requests in browser. Responses are returned in the `fp-ts` datatype
-`TaskEither`, which provides a useful layer around Promises, for more
-structured/reliable async code.
+## Installation
 
-Runs inside of `TaskEither` monad.
+`npm install fetch-decode fp-ts io-ts`
+or
+`yarn add fetch-decode fp-ts io-ts`
 
 ## Usage
 
-```TypeScript
+```ts
 import { pipe } from "fp-ts/lib/function";
 import * as TE from "fp-ts/lib/TaskEither";
 import * as t from "io-ts";
@@ -38,31 +46,61 @@ type Todo = t.TypeOf<typeof Todo>;
 // Function passed to `TE.map` will receive the Todo object on succeses.
 // `TE.mapLeft` will pass any error to the function provided.
 const requestTodo = pipe(
-  getAndDecode(Todo)("https://jsonplaceholder.typicode.com/todos/1"),
+  getAndDecode(Todo)("https://jsonplaceholder.typicode.com/todossss/1"),
   TE.map(console.log), // { userId: 1, id: 1, title: 'delectus aut autem', completed: false }
   TE.mapLeft(err => {
-    const message = err instanceof "HTTPError" ? getHttpErrorMessage(err) :  
-    console.error
+    // Discriminating union interfaces used for all Errors, discriminating on `_tag` prop.
+    const message = err._tag === "HTTP_ERROR" ? `${err.status} - ${err.message}` : err.message ;
+    console.error(message);
   })
 );
 
-// requestTodo is a `TaskEither` which will resolve the underlying promise from fetch to
-// `Either<FetchError, Todo>` when invoked.
 requestTodo();
 ```
 
 ## Error Types
 
-`type FetchError = Error | HTTPError;` where `HTTPError` is simply:
+All fetch wrappers return errors of discriminating union type
+`FetchError | HTTPError | DecodeError`
+, discriminating on `_tag` property.
 
-```TypeScript
-interface HTTPError extends Error {
-  status: number;
-}
+HTTPError has the additional property of `status` which gives the http status
+from the fetch request that failed.  This prop facilitates handling various 4xx
+errors like authentication and bad request.
+
+Following snippet would allow you to handle each type of error interface
+returned from fetch wrappers:
+```ts
+  const getMessageForFetchDecodeError = err => {
+    switch (err._tag) {
+      case "HTTP_ERROR":
+        return `Request failed with http status ${err.status}`
+      case "DECODE_ERROR":
+        return `Response could not be decoded: ${err.message}`
+      case "FETCH_ERROR":
+        return `Request threw error: ${err.message}`
+      default:
+        return "Library author added an error type. !#$!%$!$%!$%"
+    }
+  }
 ```
 
-Essentially this just gives you easy access to the HTTP response status code,
-facilitate handling various 4xx errors and so forth.
+## Set Default Init Values
+
+Here is an example of how you could set defaults for headers or other `init`
+parameters:
+
+```ts
+  const projectHeaders = {
+    headers: {
+      "apikey": "your project's api key",
+    }
+  };
+
+  const myProjectsGetFetcher = initFetchAndDecode({ ...projectHeaders });
+  const myProjectsPostFetcher = initFetchAndDecode({ ...projectHeaders, method: "POST" });
+  // ...
+```
 
 ## Additional Resources
 
@@ -75,7 +113,7 @@ horizons with the amazing theory behind the magic.
 
 ## Notes, Notes, Notes!
 
-_note: Only useful with Typescript. Transpiled Javascript not included. Downside
+_note: Only useful with Typescript, so the transpiled Javascript not included. A downside
 to this is that it is written with TS 4.0, but may not work with other versions.
 This will be revisited in future version, probably reverting to the more normal
 practice of distributing .js + TS types._
