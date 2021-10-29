@@ -60,7 +60,7 @@ requestTodo();
 
 ## Error Types
 
-All fetch wrappers return errors of discriminating union type
+All fetch wrappers return errors of discriminated union type
 `FetchError | HTTPError | DecodeError`
 , discriminating on `_tag` property.
 
